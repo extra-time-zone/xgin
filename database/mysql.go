@@ -118,5 +118,5 @@ func checkDbConfig(c *MySqlConfig) {
 
 // DSN
 func genDbDSN(m *MySqlConfig) string {
-	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&collation=%s", m.Username, m.Password, m.Host, m.Port, m.Dbname, m.Charset, m.Collation)
+	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&collation=%s&parseTime=true&loc=UTC", m.Username, m.Password, m.Host, m.Port, m.Dbname, m.Charset, m.Collation)
 }
