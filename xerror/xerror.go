@@ -37,6 +37,9 @@ func NewXError(msg string) *XError {
 // XError 实现 error 接口
 func (e *XError) Error() string {
 	if e.Cause != nil {
+		if e.Msg == "" {
+			return fmt.Sprintf("%s:%d [%s] %v", e.File, e.Line, e.Func, e.Cause)
+		}
 		return fmt.Sprintf("%s:%d [%s] %s | %v", e.File, e.Line, e.Func, e.Msg, e.Cause)
 	}
 
@@ -50,12 +53,29 @@ func (e *XError) Unwrap() error {
 
 // Wrap 在原有错误上包裹一层上下文信息
 func Wrap(err error, msg string) *XError {
-	if err == nil {
-		return nil
-	}
-
 	pc, file, line, _ := runtime.Caller(1)
 	fn := runtime.FuncForPC(pc)
+
+	//err is nil
+	if err == nil {
+		return &XError{
+			Msg:  msg,
+			File: filepath.Base(file),
+			Line: line,
+			Func: shortFunc(fn.Name()),
+		}
+	}
+
+	//err not XError
+	var xe *XError
+	if !errors.As(err, &xe) {
+		err = &XError{
+			Cause: err,
+			File:  filepath.Base(file),
+			Line:  line,
+			Func:  shortFunc(fn.Name()),
+		}
+	}
 
 	return &XError{
 		Msg:   msg,
@@ -96,9 +116,9 @@ func FormatStack(err error) string {
 
 // FirstXError 获取最外层错误
 func FirstXError(err error) *XError {
-	var xerr *XError
-	if errors.As(err, &xerr) {
-		return xerr
+	var xe *XError
+	if errors.As(err, &xe) {
+		return xe
 	}
 	return nil
 }
